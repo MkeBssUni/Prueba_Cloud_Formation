@@ -1,0 +1,491 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  cafe-balu-back
+  Sample SAM Template for cafe-balu-back
+
+Globals:
+  Function:
+    Timeout: 25
+    MemorySize: 128
+
+Parameters:
+  DBUsername:
+    Description: "Username for MySQL database"
+    Type: String
+    NoEcho: true
+  DBPassword:
+    Description: "Password for MySQL database"
+    Type: String
+    NoEcho: true
+  VPCId:
+    Description: "vpc-0892c04cc6d3da369"
+    Type: String
+
+Resources:
+  LambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: LambdaBasicExecution
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: arn:aws:logs:*:*:*
+        - PolicyName: AccessGetSecretsManager
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - secretsmanager:GetSecretValue
+                Resource: "*"
+        - PolicyName: PolicyForCognito_AdminInitiateAuth
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - cognito-idp:AdminInitiateAuth
+                Resource: "*"
+        - PolicyName: PolicyForS3
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:PutObject
+                  - s3:GetObject
+                  - s3:ListBucket
+                Resource: arn:aws:s3:::my-cafe-balu-images/*
+        - PolicyName: PolicyForCognito
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - cognito-idp:AdminListGroupsForUser
+                Resource: "*"
+
+  ApiPruebaBalu:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: Prod
+      Name: ApiPruebaBalu
+
+  UpdateCategoryFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: update_category/
+      Handler: app.lambda_handler
+      Runtime: python3.12
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Architectures:
+        - x86_64
+      Events:
+        UpdateCategory:
+          Type: Api
+          Properties:
+            RestApiId: !Ref ApiPruebaBalu
+            Path: /update_category
+            Method: put
+
+  GetProductsFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: get_products/
+      Handler: app.lambda_handler
+      Runtime: python3.12
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Architectures:
+        - x86_64
+      Events:
+        GetProducts:
+          Type: Api
+          Properties:
+            RestApiId: !Ref ApiPruebaBalu
+            Path: /get_products/{status}
+            Method: get
+
+  ChangeStatusCategoryOrProductFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: change_status_category_or_product/
+      Handler: app.lambda_handler
+      Runtime: python3.12
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Architectures:
+        - x86_64
+      Events:
+        ChangeStatus:
+          Type: Api
+          Properties:
+            RestApiId: !Ref ApiPruebaBalu
+            Path: /change_status_category_or_product
+            Method: patch
+
+  SaveCategoryFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: save_category/
+      Handler: app.lambda_handler
+      Runtime: python3.12
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Architectures:
+        - x86_64
+      Events:
+        SaveCategory:
+          Type: Api
+          Properties:
+            RestApiId: !Ref ApiPruebaBalu
+            Path: /save_category
+            Method: post
+
+  CancelSaleFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: cancel_sales/
+      Handler: app.lambda_handler
+      Runtime: python3.12
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Architectures:
+        - x86_64
+      Events:
+        CancelSale:
+          Type: Api
+          Properties:
+            RestApiId: !Ref ApiPruebaBalu
+            Path: /cancel_sale/{id}
+            Method: patch
+
+  AddProductFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: save_product/
+      Handler: app.lambda_handler
+      Runtime: python3.12
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Architectures:
+        - x86_64
+      Events:
+        AddProduct:
+          Type: Api
+          Properties:
+            RestApiId: !Ref ApiPruebaBalu
+            Path: /add_product
+            Method: post
+
+  GetCategoriesFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: get_category/
+      Handler: app.lambda_handler
+      Runtime: python3.12
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Architectures:
+        - x86_64
+      Events:
+        GetCategories:
+          Type: Api
+          Properties:
+            RestApiId: !Ref ApiPruebaBalu
+            Path: /get_categories/{status}
+            Method: get
+
+  SaveSaleFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: save_sale/
+      Handler: app.lambda_handler
+      Runtime: python3.12
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Architectures:
+        - x86_64
+      Events:
+        SaveSale:
+          Type: Api
+          Properties:
+            RestApiId: !Ref ApiPruebaBalu
+            Path: /save_sale
+            Method: post
+
+  UpdateProductFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: update_product/
+      Handler: app.lambda_handler
+      Runtime: python3.12
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Architectures:
+        - x86_64
+      Events:
+        UpdateProduct:
+          Type: Api
+          Properties:
+            RestApiId: !Ref ApiPruebaBalu
+            Path: /update_product
+            Method: put
+
+  HistorySalesPerDayFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: view_sales_history_per_day
+      Handler: app.lambda_handler
+      Runtime: python3.12
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Architectures:
+        - x86_64
+      Events:
+        HistorySalesPerDay:
+          Type: Api
+          Properties:
+            RestApiId: !Ref ApiPruebaBalu
+            Path: /history_per_day
+            Method: post
+
+  LoginFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: login
+      Handler: app.lambda_handler
+      Runtime: python3.12
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Architectures:
+        - x86_64
+      Events:
+        Login:
+          Type: Api
+          Properties:
+            RestApiId: !Ref ApiPruebaBalu
+            Path: /login
+            Method: post
+
+  NewPasswordFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: newPassword
+      Handler: app.lambda_handler
+      Runtime: python3.12
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Architectures:
+        - x86_64
+      Events:
+        NewPassword:
+          Type: Api
+          Properties:
+            RestApiId: !Ref ApiPruebaBalu
+            Path: /new-password
+            Method: patch
+
+  GetOneProductFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: get_one_product
+      Handler: app.lambda_handler
+      Runtime: python3.12
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Architectures:
+        - x86_64
+      Events:
+        GetOneProduct:
+          Type: Api
+          Properties:
+            RestApiId: !Ref ApiPruebaBalu
+            Path: /get_product/{id}
+            Method: get
+
+  GetTopSoldProductsFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: top_sold_products
+      Handler: app.lambda_handler
+      Runtime: python3.12
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Architectures:
+        - x86_64
+      Events:
+        GetTopSoldProducts:
+          Type: Api
+          Properties:
+            RestApiId: !Ref ApiPruebaBalu
+            Path: /get_top_sold_products
+            Method: post
+
+  GetEndOfDayBalanceFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: end_of_day_balance
+      Handler: app.lambda_handler
+      Runtime: python3.12
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Architectures:
+        - x86_64
+      Events:
+        GetEndOfDayBalance:
+          Type: Api
+          Properties:
+            RestApiId: !Ref ApiPruebaBalu
+            Path: /get_end_of_day_balance
+            Method: post
+
+  GetLowStockProductsFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: get_low_stock_products
+      Handler: app.lambda_handler
+      Runtime: python3.12
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Architectures:
+        - x86_64
+      Events:
+        GetLowStockProducts:
+          Type: Api
+          Properties:
+            RestApiId: !Ref ApiPruebaBalu
+            Path: /get_low_stock_products
+            Method: get
+
+  RDSInstance:
+    Type: AWS::RDS::DBInstance
+    Properties:
+      DBName: cafeBaluDBTest
+      AllocatedStorage: 20
+      DBInstanceClass: db.t3.micro
+      Engine: MySQL
+      MasterUsername: !Ref DBUsername
+      MasterUserPassword: !Ref DBPassword
+      VPCSecurityGroups:
+        - !GetAtt DBSecurityGroup.GroupId
+      PubliclyAccessible: true
+      MultiAZ: false
+
+  DBSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: "Allow access to RDS"
+      VpcId: !Ref VPCId
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 3306
+          ToPort: 3306
+          CidrIp: 0.0.0.0/0
+
+  S3Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: my-cafe-balu-images
+      VersioningConfiguration:
+        Status: Enabled
+
+Outputs:
+  UpdateCategoryApi:
+    Description: "API Gateway endpoint URL for Prod stage for UpdateCategory function"
+    Value: !Sub "https://${ApiPruebaBalu}.execute-api.${AWS::Region}.amazonaws.com/Prod/update_category"
+  UpdateCategoryFunctionArn:
+    Description: "UpdateCategory Lambda Function ARN"
+    Value: !GetAtt UpdateCategoryFunction.Arn
+  GetProductsApi:
+      Description: "API Gateway endpoint URL of Prod stage for GetProducts function"
+      Value: !Sub "https://${ApiPruebaBalu}.execute-api.${AWS::Region}.amazonaws.com/Prod/get_products/{status}"
+  GetProductApiFunctionArn:
+      Description: "Get Products Lambda Function ARN"
+      Value: !GetAtt GetProductsFunction.Arn
+  ChangeStatusCategoryOrProductApi:
+    Description: "API Gateway endpoint URL of Prod stage for ChangeStatusCategoryOrProduct function"
+    Value: !Sub "https://${ApiPruebaBalu}.execute-api.${AWS::Region}.amazonaws.com/Prod/change_status_category_or_product"
+  ChangeStatusCategoryOrProductApiFunctionArn:
+    Description: "Change Status Category Or Product Lambda Function ARN"
+    Value: !GetAtt ChangeStatusCategoryOrProductFunction.Arn
+  SaveCategoryApi:
+    Description: "Save category API"
+    Value: !Sub "https://${ApiPruebaBalu}.execute-api.${AWS::Region}.amazonaws.com/Prod/save_category"
+  CancelSaleApi:
+    Description: "Cancel sale API"
+    Value: !Sub "https://${ApiPruebaBalu}.execute-api.${AWS::Region}.amazonaws.com/Prod/cancel_sale/{id}"
+  AddProductApi:
+    Description: "API Gateway endpoint URL for Prod stage for AddProduct function"
+    Value: !Sub "https://${ApiPruebaBalu}.execute-api.${AWS::Region}.amazonaws.com/Prod/add_product"
+  AddProductFunctionArn:
+    Description: "AddProduct Lambda Function ARN"
+    Value: !GetAtt AddProductFunction.Arn
+  GetCategoriesApi:
+    Description: "API Gateway endpoint URL for Prod stage for GetCategories function"
+    Value: !Sub "https://${ApiPruebaBalu}.execute-api.${AWS::Region}.amazonaws.com/Prod/get_categories/{status}"
+  GetCategoriesFunctionArn:
+    Description: "GetCategories Lambda Function ARN"
+    Value: !GetAtt GetCategoriesFunction.Arn
+  SaveSaleApi:
+    Description: "Save sale API"
+    Value: !Sub "https://${ApiPruebaBalu}.execute-api.${AWS::Region}.amazonaws.com/Prod/save_sale"
+  SaveSaleFunctionArn:
+    Description: "SaveSale Lambda Function ARN"
+    Value: !GetAtt SaveSaleFunction.Arn
+  UpdateProductApi:
+    Description: "Update product API"
+    Value: !Sub "https://${ApiPruebaBalu}.execute-api.${AWS::Region}.amazonaws.com/Prod/update_product/"
+  HistorySalesPerDayApi:
+    Description: "View of sales history per day API"
+    Value: !Sub "https://${ApiPruebaBalu}.execute-api.${AWS::Region}.amazonaws.com/Prod/history_per_day"
+  HistorySalesPerDayFunctionArn:
+    Description: "HistorySalesPerDay Lambda Function ARN"
+    Value: !GetAtt HistorySalesPerDayFunction.Arn
+  LoginApi:
+    Description: "Login API"
+    Value: !Sub "https://${ApiPruebaBalu}.execute-api.${AWS::Region}.amazonaws.com/Prod/login"
+  LoginFunctionArn:
+    Description: "Login Lambda Function ARN"
+    Value: !GetAtt LoginFunction.Arn
+  NewPasswordApi:
+    Description: "New password API"
+    Value: !Sub "https://${ApiPruebaBalu}.execute-api.${AWS::Region}.amazonaws.com/Prod/new-password"
+  NewPasswordArn:
+    Description: "NewPassword Lambda Function ARN"
+    Value: !GetAtt NewPasswordFunction.Arn
+  GetOneProductApi:
+    Description: "Get one product API"
+    Value: !Sub "https://${ApiPruebaBalu}.execute-api.${AWS::Region}.amazonaws.com/Prod/get_product/{id}"
+  GetOneProductFunctionArn:
+    Description: "GetOneProduct Lambda Function ARN"
+    Value: !GetAtt GetOneProductFunction.Arn
+  GetTopSoldProductsApi:
+    Description: "Get top sold products API"
+    Value: !Sub "https://${ApiPruebaBalu}.execute-api.${AWS::Region}.amazonaws.com/Prod/get_top_sold_products"
+  GetTopSoldProductsFunctionArn:
+    Description: "GetTopSoldProducts Lambda Function ARN"
+    Value: !GetAtt GetTopSoldProductsFunction.Arn
+  GetEndOfDayBalanceApi:
+    Description: "Get end of day balance API"
+    Value: !Sub "https://${ApiPruebaBalu}.execute-api.${AWS::Region}.amazonaws.com/Prod/get_end_of_day_balance"
+  GetEndOfDayBalanceFunctionArn:
+    Description: "GetEndOfDayBalance Lambda Function ARN"
+    Value: !GetAtt GetEndOfDayBalanceFunction.Arn
+  GetLowStockProductsApi:
+    Description: "Get low stock products API"
+    Value: !Sub "https://${ApiPruebaBalu}.execute-api.${AWS::Region}.amazonaws.com/Prod/get_low_stock_products"
+  GetLowStockProductsFunctionArn:
+    Description: "GetLowStockProducts Lambda Function ARN"
+    Value: !GetAtt GetLowStockProductsFunction.Arn
+  LambdaExecutionRoleArn:
+    Description: "Lambda Execution Role ARN"
+    Value: !GetAtt LambdaExecutionRole.Arn
+  RDSInstanceEndpoint:
+    Description: "RDS Instance Endpoint"
+    Value: !GetAtt RDSInstance.Endpoint.Address
+  RDSInstancePort:
+    Description: "RDS Instance Port"
+    Value: !GetAtt RDSInstance.Endpoint.Port
+  S3BucketName:
+    Description: "Name of the S3 bucket"
+    Value: !Ref S3Bucket
