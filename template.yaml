@@ -25,6 +25,23 @@ Resources:
           RequireNumbers: true
           RequireSymbols: true
 
+# Roles del sistema
+  AdminGroup:
+    Type: AWS::Cognito::UserPoolGroup
+    Properties:
+      GroupName: admin
+      UserPoolId: !Ref CognitoUserPool
+      Description: "Usuario que tiene los permisos de administrador"
+      Precedence: 1
+
+  SalesGroup:
+    Type: AWS::Cognito::UserPoolGroup
+    Properties:
+      GroupName: sales
+      UserPoolId: !Ref CognitoUserPool
+      Description: "Usuarios que pueden gestionar ventas"
+      Precedence: 2
+
   # Cliente de aplicación
   CognitoUserPoolClient:
     Type: AWS::Cognito::UserPoolClient
