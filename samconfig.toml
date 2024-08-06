@@ -17,8 +17,8 @@ lint = true
 capabilities = "CAPABILITY_IAM"
 confirm_changeset = true
 resolve_s3 = true
-stack_name = "testsdfsdf"
-s3_prefix = "testsdfsdf"
+stack_name = "testcognitojeje"
+s3_prefix = "testcognitojeje"
 region = "us-east-2"
 image_repositories = []
 parameter_overrides = "VPCId=\"vpc-0892c04cc6d3da369\""

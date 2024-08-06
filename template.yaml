@@ -9,20 +9,44 @@ Globals:
     Timeout: 25
     MemorySize: 128
 
-Parameters:
-  DBUsername:
-    Description: "Username for MySQL database"
-    Type: String
-    NoEcho: true
-  DBPassword:
-    Description: "Password for MySQL database"
-    Type: String
-    NoEcho: true
-  VPCId:
-    Description: "vpc-0892c04cc6d3da369"
-    Type: String
-
 Resources:
+  # User Pool
+  CognitoUserPool:
+    Type: AWS::Cognito::UserPool
+    Properties:
+      UserPoolName: user-pool-test
+      AutoVerifiedAttributes:
+        - email
+      Policies:
+        PasswordPolicy:
+          MinimumLength: 8
+          RequireUppercase: true
+          RequireLowercase: true
+          RequireNumbers: true
+          RequireSymbols: true
+
+  # Cliente de aplicación
+  CognitoUserPoolClient:
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      ClientName: user-pool-client-test
+      UserPoolId: !Ref CognitoUserPool
+      GenerateSecret: false
+      AllowedOAuthFlowsUserPoolClient: false
+
+  # API Gateway
+  ApiPruebaBalu:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: Prod
+      Name: ApiPruebaBalu
+      Auth:
+        DefaultAuthorizer: CognitoAuthorizer
+        Authorizers:
+          CognitoAuthorizer:
+            UserPoolArn: !GetAtt CognitoUserPool.Arn
+            IdentitySource: method.request.header.Authorization
+
   LambdaExecutionRole:
     Type: AWS::IAM::Role
     Properties:
@@ -79,12 +103,7 @@ Resources:
                   - cognito-idp:AdminListGroupsForUser
                 Resource: "*"
 
-  ApiPruebaBalu:
-    Type: AWS::Serverless::Api
-    Properties:
-      StageName: Prod
-      Name: ApiPruebaBalu
-
+  # Example of adding an authorizer to a Lambda function
   UpdateCategoryFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -364,8 +383,8 @@ Resources:
       AllocatedStorage: 20
       DBInstanceClass: db.t3.micro
       Engine: MySQL
-      MasterUsername: !Ref DBUsername
-      MasterUserPassword: !Ref DBPassword
+      MasterUsername: "baluroot"
+      MasterUserPassword: "baluroot"
       VPCSecurityGroups:
         - !GetAtt DBSecurityGroup.GroupId
       PubliclyAccessible: true
@@ -375,7 +394,7 @@ Resources:
     Type: AWS::EC2::SecurityGroup
     Properties:
       GroupDescription: "Allow access to RDS"
-      VpcId: !Ref VPCId
+      VpcId: "vpc-0892c04cc6d3da369"
       SecurityGroupIngress:
         - IpProtocol: tcp
           FromPort: 3306
@@ -390,6 +409,15 @@ Resources:
         Status: Enabled
 
 Outputs:
+  CognitoUserPoolId:
+    Description: "Cognito User Pool ID"
+    Value: !Ref CognitoUserPool
+  CognitoUserPoolClientId:
+    Description: "Cognito User Pool Client ID"
+    Value: !Ref CognitoUserPoolClient
+  ApiGatewayInvokeUrl:
+    Description: "API Gateway Invoke URL"
+    Value: !Sub "https://${ApiPruebaBalu}.execute-api.${AWS::Region}.amazonaws.com/Prod"
   UpdateCategoryApi:
     Description: "API Gateway endpoint URL for Prod stage for UpdateCategory function"
     Value: !Sub "https://${ApiPruebaBalu}.execute-api.${AWS::Region}.amazonaws.com/Prod/update_category"
